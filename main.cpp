@@ -4,6 +4,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+#include <tclap/CmdLine.h>
+
 static const int SCREEN_WIDTH = 2880;
 static const int SCREEN_HEIGHT = 2160;
 
@@ -17,13 +19,33 @@ void blit(const cv::Mat& src, cv::Mat& dest, int x, int y)
     src.copyTo(dest(cv::Rect(x,y, src.cols, src.rows)));
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+
+    TCLAP::CmdLine cmd("Upscale to 4k image", ' ', "0.1");
+
+    TCLAP::ValueArg<std::string> inputFile(
+        "i",
+        "input",
+        "Image file to upscale",
+        true,
+        "",
+        "filename");
+    cmd.add(inputFile);
+
+    TCLAP::ValueArg<std::string> outputFile(
+        "o",
+        "output",
+        "Output file",
+        false,
+        "",
+        "filename");
+    cmd.add(outputFile);
+
+    cmd.parse(argc, argv);
+
     std::cout << "Doing phosphor simulation." << std::endl;
 
-
-
     auto subpixel = cv::imread(imagePath + "/subpixles_4k.png");
-    // auto subpixel = cv::imread(imagePath + "/super_mario_shot.png");
 
     cv::Mat phosphorPixels(SCREEN_HEIGHT, SCREEN_WIDTH, CV_8UC3, cv::Scalar(0,0,0));
 
@@ -32,11 +54,12 @@ int main() {
             blit(subpixel, phosphorPixels, x, y);
         }
     }
-    cv::imwrite(imagePath + "/out.png", phosphorPixels);
+    // cv::imwrite(imagePath + "/out.png", phosphorPixels);
 
 
 
-    auto gameImage = cv::imread(imagePath + "/test.png");
+    // auto gameImage = cv::imread(imagePath + "/test.png");
+    auto gameImage = cv::imread(inputFile.getValue());
 
     auto scanlineRgb = cv::imread(imagePath + "/scanline_mono.png", cv::IMREAD_GRAYSCALE);
     cv::Mat scanline;
@@ -67,7 +90,7 @@ int main() {
         }
     }
 
-    cv::imwrite(imagePath + "/scan_image.png", scanlinesR);
+    // cv::imwrite(imagePath + "/scan_image.png", scanlinesR);
 
     std::vector<cv::Mat> phosphorBgr;
 
@@ -86,11 +109,12 @@ int main() {
     screen = screen * 8;
     screen.convertTo(screen, CV_8UC3, 255);
 
-    cv::imwrite(imagePath + "/final.png", screen);
-
-    cv::imshow("result", screen);
-
-    cv::waitKey();
+    if (outputFile.isSet()) {
+        cv::imwrite(outputFile.getValue(), screen);
+    } else {
+        cv::imshow("result", screen);
+        cv::waitKey();
+    }
 
     std::cout << "Doing phosphor simulation. END" << std::endl;
     return 0;

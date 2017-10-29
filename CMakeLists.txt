@@ -5,6 +5,9 @@ project(LTI_Phosphor)
 
 #find_package( OpenCV REQUIRED )
 
+include_directories(
+    ${PROJECT_SOURCE_DIR}/3rd_party)
+
 add_executable(${PROJECT_NAME}
     main.cpp)
 
